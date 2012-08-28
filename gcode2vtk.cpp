@@ -22,6 +22,7 @@ vector<float> ext1;
 vector<float> ext2;
 vector<float> feedrate;
 
+
 void skipwhite(istream &s)
 {
 	s.get();
@@ -177,10 +178,11 @@ void writevtk(string name)
 	writevtkdata(out,"feedrate",n-1,feedrate);
 	
 	
-	vector<float> distances,segnr,time;
+	vector<float> distances,segnr,time,eratio; // extrusion ratio = e / |dx,dy,dz|
 	distances.resize(n);
 	segnr.resize(n);
 	time.resize(n);
+	eratio.resize(n);
 	
 	for(int i=0;i<n-1;i++)
 	{
@@ -208,14 +210,20 @@ void writevtk(string name)
 		float thick=(ext1[i+1]-ext1[i]);
 		
 		if(distances[i]==0)
+		  eratio[i] = 0;
+		else
+		  eratio[i] = thick / distances[i];
+		
+		if(distances[i]==0)
 			thick=3;
 		else
 			thick*=1./distances[i];
 		if(thick<0)thick=0;
 		d[i]=thick;
-	
+	    
 	}
 	writevtkdata(out,"rel_d",n-1,d);
+	writevtkdata(out,"eratio",n-1,eratio);
 	
 	out<<endl;
 }
