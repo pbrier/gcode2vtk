@@ -59,7 +59,7 @@ void readpath(string ngc)
 		
 		//cout<<"reading:"<<t<<endl;
 		bool done;
-		if(t=="G1")
+		if(t=="G1" || t=="G0")
 		{
 			//x[0]=0;
 			//x[1]=0;
@@ -178,18 +178,24 @@ void writevtk(string name)
 	writevtkdata(out,"feedrate",n-1,feedrate);
 	
 	
-	vector<float> distances,segnr,time,eratio; // extrusion ratio = e / |dx,dy,dz|
+	vector<float> distances,segnr,time,eratio,seglen16; // extrusion ratio = e / |dx,dy,dz|
+    float dist16[16];
 	distances.resize(n);
 	segnr.resize(n);
 	time.resize(n);
 	eratio.resize(n);
+    seglen16.resize(n);
 	
+    for(int i=0; i<16; i++) 
+      dist16[i] = 0.0;
+    
 	for(int i=0;i<n-1;i++)
 	{
 	    segnr[i]=i;
 		distances[i]=sqrt(pow(points[i*3+3]-points[i*3+0],2)+\
 								pow(points[i*3+4]-points[i*3+1],2)+\
 								pow(points[i*3+5]-points[i*3+2],2));
+        
 	    float timeneeded=0;
 	    if(feedrate[i]>0)
 	      timeneeded=distances[i]/feedrate[i];
@@ -197,10 +203,17 @@ void writevtk(string name)
 	      time[i]=0;
 	    else
 	      time[i]=time[i-1]+timeneeded;
-	  
+       
+        // dist16[i & 0xF ] = 60.0*timeneeded; //  [mm/min] --> [mm/sec] 
+        dist16[i & 0xF ] = distances[i]; // moving average distance of 16 segments        
+        seglen16[i] = dist16[0] + dist16[1] + dist16[2] + dist16[3] + dist16[5] + dist16[6] + dist16[7] + 
+          dist16[8] + dist16[9] + dist16[10] + dist16[11] + dist16[12] + dist16[13] + dist16[14] + dist16[15];
+       
+	    
 	}
 	
 	writevtkdata(out,"seg_length",n-1,distances);
+    writevtkdata(out,"buflen",n-1,seglen16);
 	writevtkdata(out,"seg_number",n-1,segnr);
 	writevtkdata(out,"build_time",n-1,time);
 	vector<float> d;
