@@ -21,6 +21,8 @@ vector<float> points;
 vector<float> ext1;
 vector<float> ext2;
 vector<float> feedrate;
+vector<float> nozzle;
+
 
 
 void skipwhite(istream &s)
@@ -48,6 +50,7 @@ void readpath(string ngc)
 	float x[]={0,0,0};
 	float fr=0;
 	float e1=0;
+    float tool=0;
 	points.push_back(0);points.push_back(0);points.push_back(0);
 	//feedrate.push_back(0);
 	ext1.push_back(0);
@@ -93,7 +96,7 @@ void readpath(string ngc)
             break;
            case 'F':
            	fr=tmp;
-            break;
+            break;           
            default:
           	done=true;
           	points.push_back(x[0]);
@@ -101,6 +104,7 @@ void readpath(string ngc)
           	points.push_back(x[2]);
           	ext1.push_back(e1);
           	feedrate.push_back(fr);
+            nozzle.push_back(tool);
           	//cout<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<endl;
           
           }
@@ -108,6 +112,8 @@ void readpath(string ngc)
          } //while not done
 			//cout<<"end of g1"<<endl;
 		} //g1 block
+        else if ( t == "T0" ) tool=0;
+        else if ( t == "T1" ) tool=1;
 		else
 		{
 			//ignore line
@@ -216,6 +222,7 @@ void writevtk(string name)
     writevtkdata(out,"buflen",n-1,seglen16);
 	writevtkdata(out,"seg_number",n-1,segnr);
 	writevtkdata(out,"build_time",n-1,time);
+    writevtkdata(out,"nozzle",n-1,nozzle);
 	vector<float> d;
 	d.resize(n-1+1,0);
 	for(int i=1;i<n-1;i++)
